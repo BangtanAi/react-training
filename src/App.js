@@ -1,44 +1,62 @@
-import React from 'react';
-import './index.scss';
-
-function Collection({ name, images }) {
-  return (
-    <div className="collection">
-      <img className="collection__big" src={images[0]} alt="Item" />
-      <div className="collection__bottom">
-        <img className="collection__mini" src={images[1]} alt="Item" />
-        <img className="collection__mini" src={images[2]} alt="Item" />
-        <img className="collection__mini" src={images[3]} alt="Item" />
-      </div>
-      <h4>{name}</h4>
-    </div>
-  );
-}
+import axios from "axios";
+import React from "react";
+import Collection from "./components/Collection";
+import "./index.scss";
 
 function App() {
+  const [collections, setCollections] = React.useState([]);
+  const [activeCategory, setActiveCategory] = React.useState(0);
+  const [searchValue, setSearchValue] = React.useState("");
+  const [categories, setCategories] = React.useState([]);
+  React.useEffect(() => {
+    axios.get("/data.json").then((res) => {
+      setCollections(res.data.collections);
+    });
+  }, []);
+  React.useEffect(() => {
+    axios.get("/data.json").then((res) => {
+      setCategories(res.data.categories);
+    });
+  }, []);
+  const onChangeSearchValue = (e) => {
+    setSearchValue(e.target.value);
+  };
+  const onChangeActiveCategory = (idx) => {
+    setActiveCategory(idx);
+  };
   return (
     <div className="App">
       <h1>Моя коллекция фотографий</h1>
       <div className="top">
         <ul className="tags">
-          <li className="active">Все</li>
-          <li>Горы</li>
-          <li>Море</li>
-          <li>Архитектура</li>
-          <li>Города</li>
+          {categories.map((item, index) => (
+            <li
+              onClick={() => onChangeActiveCategory(index)}
+              className={activeCategory === index ? "active" : ""}
+              key={item.name}
+            >
+              {item.name}
+            </li>
+          ))}
         </ul>
-        <input className="search-input" placeholder="Поиск по названию" />
+        <input
+          value={searchValue}
+          className="search-input"
+          placeholder="Поиск по названию"
+          onChange={onChangeSearchValue}
+        />
       </div>
       <div className="content">
-        <Collection
-          name="Путешествие по миру"
-          images={[
-            'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTN8fGNpdHl8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-            'https://images.unsplash.com/photo-1560840067-ddcaeb7831d2?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDB8fGNpdHl8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-            'https://images.unsplash.com/photo-1531219572328-a0171b4448a3?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mzl8fGNpdHl8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-            'https://images.unsplash.com/photo-1573108724029-4c46571d6490?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MzR8fGNpdHl8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-          ]}
-        />
+        {collections
+          .filter(
+            (item) => activeCategory === 0 || activeCategory === item.category
+          )
+          .filter((item) =>
+            item.name.toLowerCase().includes(searchValue.toLowerCase())
+          )
+          .map((item, index) => (
+            <Collection key={index} name={item.name} images={item.photos} />
+          ))}
       </div>
       <ul className="pagination">
         <li>1</li>
